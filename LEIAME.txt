@@ -1,0 +1,82 @@
+Autor:
+	
+Pedro Cruz, 11965859
+pedrocm123@usp.br
+
+Descrição:
+
+Nesse projeto temos a implementação de um algoritmo de hashing, ou seja, vamos produzir uma nova string de "identificação" de outra determinada string em 4 passos:
+
+O primeiro passo corresponde ao padding utilizando 16 como o número designado, ou seja, é adicionado n vezes o número n no final da string original (ASCII), até que a string lida originalmente conte com um número de caractéres igual a num_de_caracteres_original + (16 - (num_de_caracteres_original)MOD16)
+
+No segundo passo vamos produzir um novo bloco de inteiros que vamos concatenar com a string resultante do primeiro passo a partir do seguinte algoritmo (pseudocódigo): 
+
+						novoBloco ← [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+						novoValor ← 0
+						for (i ← 0 to n − 1) do
+							for (j ← 0 to 15) do
+							  novoValor ← vetorMagico[(saidaPassoUm[i×16+j] XOR novoValor)] XOR novoBloco[j]
+							  novoBloco[j] ← novoValor
+							end for
+						end for
+						return novoBloco
+
+vetorMagico nesse caso é um vetor constante (declarado na section .data (assembly)) cujo conteudo está descrito no final desse arquivo. Após a concatenação desse novo bloco preenchido em nosso buffer de leitura teremos uma string com 16(n + 1) blocos de 16 bytes.
+
+O terceiro passo do hash vai ser o de uniformizar o tamanho das strings hasheadas para 48 bytes, ou seja, mesmo que o tamanho original da string seja de 100000 caractéres, nesse passo é formada uma string com 48 caractéres que irá ser posteriormente printada.
+
+						saidaP assoT res ← [0, 0, 0, 0, 0, 0, 0, 0, 0, 0 . . . , 0] 
+						for (i ← 0 to n) do
+							for (j ← 0 to 15) do
+								saidaP assoT res[16 + j] ← saidaPassoDois[i × 16 + j]
+								saidaP assoT res[2 × 16 + j] ← (saidaPassoT res[16 + j] XOR saidaPassoTres[j])
+							end for
+							temp ← 0
+							for j ← 0 to 17 do
+								for k ← 0 to 47 do
+									temp ← saidaP assoTres[k] XOR vetorM agico[temp]
+									saidaPassoTres[k] ← temp
+								end for
+								temp ← (temp + j)%256
+							end for
+						end for
+						return saidaPassoTres
+
+
+Agora, é formado um novo vetor chamado saidaPassoTres, que sempre conterá 48 bytes.
+
+O quarto e último passo é o de printar os primeiros 16 bytes da saidaPassoTres (ASCII) em sua forma hexadecimal, para isso, no código em assembly, foi implementado na section .data um vetor hex_chars com os seguintes caractéres: "0123456789abcdef". Assim, o programa funciona da seguinte forma: Fazemos um loop com 16 iterações para iterar sobre os 16 primeiros bytes de SaidaPassoTres, o número ascii correspondente àquela posição do vetor é dividido por 16, obtendo-se tanto o quociente da divisão (que será seu algarismo hexadecimal mais significativo) e seu resto (algarismo menos significativo). Utilizamos esse quociente e resto da divisão para achar o algarismo hexadecimal correspondente no vetor hex_chars e armazenamos em um vetor print_final, declarado em .bss com 32 bytes de memória (2 bytes para cada número). Para o código em python foi mais simples, bastou uma iteração para as 16 primeiras posições do vetor SaidaPassoTres com um print(hex(vetor[i])).
+
+
+Como gerar o executável e como executar: (os nomes dos arquivos são os mesmos que os escritos abaixo)
+
+Para escolher que texto será hasheado, é importante que se mexa com os paramêtros dentro dos respectivos códigos. No código em python, basta trocar a variavel "file_path" para algum outro nome de algum outro arquivo .txt presente no diretório (já foi colocado dentro dele os arquivos para testes). Nó código em assembly temos que alterar, dentro da section .data o valor de nome_do_arquivo para o nome do arquivo .txt desejado.
+
+Para a geração do executável do código em assembly é necessário, primeiramente, navegar para o diretório em que o arquivo .s está armazenado e rodar os seguintes comandos:
+
+1 - nasm -f elf64 codigoasm.s (monta o código)
+2 - ld -s codigoasm.o (linka o código)
+3 - ./codigoasm (executa o código)
+
+Para o código em python é necessário, também, navegar até o diretório do projeto e rodar o seguinte comando:
+
+1 - python3 codigo.py
+
+
+Testes:
+
+Caso testarmos com o arquivo "texto10.txt" temos que o resultado esperado a ser printado na tela é: 7ea2319be0d038908161b4e8c26bfc7a
+
+Caso testarmos com o arquivo "enunciado2.txt" temos que o resultado esperado a ser printado na tela é : c090a10ded215a7297b69d86d81e25a
+
+Caso testarmos com o arquivo "enunciado3.txt" temos que o resultado esperado a ser printado na tela é : 878561c1134d1fd53e9b36822e1914cc 
+
+
+Dependências:
+
+Versão do montador: NASM 2.16.01
+Versão do linker: GNU ld (GNU Binutils for Ubuntu) 2.38
+Versão do Python: 3.10.12
+
+vetorMagico = [122, 77, 153, 59, 173, 107, 19, 104, 123, 183, 75, 10, 114, 236, 106, 83, 117, 16, 189, 211, 51, 231, 143, 118, 248, 148, 218, 245, 24, 61, 66, 73, 205, 185, 134, 215, 35, 213, 41, 0, 174, 240, 177, 195, 193, 39, 50, 138, 161, 151, 89, 38, 176, 45, 42, 27, 159, 225, 36, 64, 133, 168, 22, 247, 52, 216, 142, 100, 207, 234, 125, 229, 175, 79, 220, 156, 91, 110, 30, 147, 95, 191, 96, 78, 34, 251, 255, 181, 33, 221, 139, 119, 197, 63, 40, 121, 204, 4, 246, 109, 88, 146, 102, 235, 223, 214, 92, 224, 242, 170, 243, 154, 101, 239, 190, 15, 249, 203, 162, 164, 199, 113, 179, 8, 90, 141, 62, 171, 232, 163, 26, 67, 167, 222, 86, 87, 71, 11, 226, 165, 209, 144, 94, 20, 219, 53, 49, 21, 160, 115, 145, 17, 187, 244, 13, 29, 25, 57, 217, 194, 74, 200, 23, 182, 238, 128, 103, 140, 56, 252, 12, 135, 178, 152, 84, 111, 126, 47, 132, 99, 105, 237, 186, 37, 130, 72, 210, 157, 184, 3, 1, 44, 69, 172, 65, 7, 198, 206, 212, 166, 98, 192, 28, 5, 155, 136, 241, 208, 131, 124, 80, 116, 127, 202, 201, 58, 149, 108, 97, 60, 48, 14, 93, 81, 158, 137, 2, 227, 253, 68, 43, 120, 228, 169, 112, 54, 250, 129, 46, 188, 196, 85, 150, 6, 254, 180, 233, 230, 31, 76, 55, 18, 9, 32, 82, 70]
+
